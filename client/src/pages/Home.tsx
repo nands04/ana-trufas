@@ -77,11 +77,14 @@ export default function Home() {
       </header>
 
       <main>
-        <section id="inicio" className="relative min-h-[680px] overflow-hidden bg-[#f7e6e9]">
-          <img src="/manus-storage/ana-trufas-dona_cf0017e6.webp" alt="Ana, fundadora da Ana Trufas, preparando doces" className="absolute inset-0 h-full w-full object-cover object-[66%_center] sm:object-center" />
+        <section id="inicio" className="relative min-h-0 overflow-hidden bg-[#f7e6e9] sm:min-h-[680px]">
+          <img src="/manus-storage/ana-trufas-dona_cf0017e6.webp" alt="Ana, fundadora da Ana Trufas, preparando doces" className="absolute inset-0 hidden h-full w-full object-cover object-[66%_center] sm:block sm:object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#fffaf7]/98 via-[#fffaf7]/90 via-45% to-[#fffaf7]/5" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#6e203a]/10 via-transparent to-white/10" />
-          <div className="relative mx-auto flex min-h-[680px] max-w-7xl items-center px-5 py-16 lg:px-10">
+          <div className="relative mx-auto w-full max-w-7xl px-5 pt-7 sm:hidden">
+            <img src="/manus-storage/ana-trufas-dona_cf0017e6.webp" alt="Ana, fundadora da Ana Trufas, preparando doces" className="h-56 w-full rounded-[28px] object-cover object-[66%_center] shadow-[0_18px_40px_rgba(110,32,58,.14)]" />
+          </div>
+          <div className="relative mx-auto flex min-h-0 max-w-7xl items-center px-5 py-10 sm:min-h-[680px] sm:py-16 lg:px-10">
             <div className="max-w-xl rounded-[32px] border border-white/70 bg-[#fffaf7]/72 p-6 shadow-[0_24px_70px_rgba(110,32,58,.10)] backdrop-blur-sm sm:p-9">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e5afbf] bg-white/75 px-3 py-2 text-[11px] font-bold uppercase tracking-[.18em] text-[#8f294c]"><Sparkles size={14} /> delivery em Maceió · todos os dias</div>
               <h1 className="font-display text-5xl font-bold leading-[.98] tracking-[-.045em] text-[#6e203a] sm:text-6xl">Seu doce favorito, <em className="font-serif font-normal text-[#ba5274]">a caminho.</em></h1>
