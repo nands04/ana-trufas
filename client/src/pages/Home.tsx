@@ -1,25 +1,92 @@
+import { useMemo, useState } from "react";
+import { ArrowRight, Check, ChevronDown, Instagram, Minus, Plus, ShoppingBag, Sparkles, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Best Practices, Design Guide and Common Pitfalls
- */
+type Category = "Todos" | "Mais pedidos" | "Bolos" | "Doces" | "Kit festa" | "Salgados";
+
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: Exclude<Category, "Todos" | "Mais pedidos"> | "Mais pedidos";
+  image: string;
+  tag?: string;
+};
+
+const products: Product[] = [
+  { id: 1, name: "Morango cravejado", description: "Morangos selecionados, brigadeiro cremoso e chocolate nobre.", price: 18, category: "Mais pedidos", image: "/manus-storage/brigadeiro_20d1c190.jpg", tag: "queridinho" },
+  { id: 2, name: "Bolo vulcão de chocolate", description: "Massa fofinha, recheio abundante de brigadeiro e acabamento belga.", price: 48, category: "Bolos", image: "/manus-storage/bolo_959cea4e.jpg", tag: "serve 8–10" },
+  { id: 3, name: "Caixa mimo Ana", description: "4 doces artesanais para presentear ou adoçar o seu dia.", price: 28, category: "Doces", image: "/manus-storage/caixa-doces_f552e39a.jpg" },
+  { id: 4, name: "Kit festa essencial", description: "Bolo 15 cm + 50 salgados + 24 doces para celebrar sem esforço.", price: 189, category: "Kit festa", image: "/manus-storage/caixa-doces_f552e39a.jpg", tag: "mais vendido" },
+  { id: 5, name: "Salgados crocantes", description: "Coxinhas, bolinhas de queijo e risoles feitos na hora.", price: 39, category: "Salgados", image: "/manus-storage/salgados_cea8b5c8.jpg" },
+  { id: 6, name: "Copo da felicidade", description: "Camadas de creme de ninho, chocolate e morangos frescos.", price: 16, category: "Doces", image: "/manus-storage/brigadeiro_20d1c190.jpg", tag: "novo" },
+];
+
+const categories: Category[] = ["Todos", "Mais pedidos", "Bolos", "Doces", "Kit festa", "Salgados"];
+const whatsappNumber = "5582994003462";
+const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 export default function Home() {
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
+  const [activeCategory, setActiveCategory] = useState<Category>("Todos");
+  const [cart, setCart] = useState<Record<number, number>>({});
+  const [cartOpen, setCartOpen] = useState(false);
+  const [delivery, setDelivery] = useState<"retirada" | "entrega">("entrega");
+  const [notes, setNotes] = useState("");
+
+  const filteredProducts = useMemo(() => activeCategory === "Todos" ? products : products.filter((p) => p.category === activeCategory), [activeCategory]);
+  const cartItems = products.filter((p) => cart[p.id]).map((p) => ({ ...p, quantity: cart[p.id] }));
+  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const updateCart = (id: number, delta: number) => {
+    setCart((current) => {
+      const next = Math.max(0, (current[id] || 0) + delta);
+      const clone = { ...current };
+      if (next === 0) delete clone[id]; else clone[id] = next;
+      return clone;
+    });
+  };
+
+  const sendOrder = () => {
+    if (!itemCount) return;
+    const lines = cartItems.map((item) => `• ${item.quantity}x ${item.name} — ${money(item.price * item.quantity)}`);
+    const message = ["Olá, Ana Trufas! Quero fazer um pedido:", "", ...lines, "", `Subtotal: ${money(subtotal)}`, `Forma: ${delivery === "entrega" ? "Entrega" : "Retirada"}`, notes ? `Observações: ${notes}` : "", "", "Podem me confirmar disponibilidade e prazo?"] .filter(Boolean).join("\n");
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank");
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#fffaf7] text-[#3a2024]">
+      <header className="sticky top-0 z-30 border-b border-[#ead6d6]/70 bg-[#fffaf7]/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 lg:px-10">
+          <a href="#inicio" className="flex items-center gap-3">
+            <img src="/manus-storage/ana-trufas-logo_f167e9aa.png" alt="Ana Trufas" className="h-12 w-12 rounded-full object-cover ring-2 ring-[#efb4c8]" />
+            <div className="leading-none"><p className="font-display text-xl font-bold tracking-tight text-[#8f294c]">Ana Trufas</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#9e787d]">doces & celebrações</p></div>
+          </a>
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-[#76545a] md:flex"><a href="#cardapio" className="transition hover:text-[#b13961]">Cardápio</a><a href="#historia" className="transition hover:text-[#b13961]">Nossa história</a><a href="https://www.instagram.com/confeitariaanatrufas/" target="_blank" rel="noreferrer" className="transition hover:text-[#b13961]">Instagram</a></nav>
+          <button onClick={() => setCartOpen(true)} className="relative flex h-11 items-center gap-2 rounded-full bg-[#8f294c] px-4 text-sm font-bold text-white shadow-[0_12px_28px_rgba(143,41,76,.22)] transition hover:-translate-y-0.5 active:scale-[.97]"><ShoppingBag size={17} /><span className="hidden sm:inline">Minha sacola</span>{itemCount > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[#f6c3d2] px-1 text-[11px] text-[#711b3b]">{itemCount}</span>}</button>
+        </div>
+      </header>
+
       <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
+        <section id="inicio" className="relative overflow-hidden bg-[#f7e6e9]">
+          <div className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-[#f3b8c9]/50 blur-3xl" /><div className="absolute -bottom-36 left-1/3 h-96 w-96 rounded-full bg-[#e9b9a8]/25 blur-3xl" />
+          <div className="relative mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-10 lg:py-20">
+            <div className="max-w-xl"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e5afbf] bg-white/60 px-3 py-2 text-[11px] font-bold uppercase tracking-[.18em] text-[#8f294c]"><Sparkles size={14} /> feito com amor desde 2014</div><h1 className="font-display text-5xl font-bold leading-[.98] tracking-[-.045em] text-[#6e203a] sm:text-6xl lg:text-7xl">O seu momento especial começa <em className="font-serif font-normal text-[#ba5274]">aqui.</em></h1><p className="mt-6 max-w-md text-lg leading-relaxed text-[#795b60]">Bolos, doces, kits festa e salgados feitos artesanalmente para deixar Maceió ainda mais gostosa.</p><div className="mt-8 flex flex-wrap items-center gap-3"><a href="#cardapio" className="inline-flex h-12 items-center gap-2 rounded-full bg-[#8f294c] px-6 text-sm font-bold text-white shadow-[0_14px_30px_rgba(143,41,76,.22)] transition hover:-translate-y-1">Ver cardápio <ArrowRight size={17} /></a><a href="https://www.instagram.com/confeitariaanatrufas/" target="_blank" rel="noreferrer" className="inline-flex h-12 items-center gap-2 rounded-full border border-[#dca6b6] bg-white/60 px-5 text-sm font-bold text-[#8f294c] transition hover:bg-white"><Instagram size={17} /> @confeitariaanatrufas</a></div><div className="mt-9 flex items-center gap-3 text-sm text-[#795b60]"><div className="flex -space-x-2"><span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#f7e6e9] bg-[#e4a8b9] text-xs font-bold text-white">A</span><span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#f7e6e9] bg-[#b94e70] text-xs font-bold text-white">♥</span><span className="grid h-8 w-8 place-items-center rounded-full border-2 border-[#f7e6e9] bg-[#d49a81] text-xs font-bold text-white">+</span></div><span><strong className="text-[#6e203a]">4,9/5</strong> de carinho em cada pedido</span></div></div>
+            <div className="relative mx-auto w-full max-w-[500px]"><div className="absolute inset-5 rounded-[42%] bg-[#fdf8f5] shadow-[0_28px_80px_rgba(110,32,58,.16)]" /><img src="/manus-storage/bolo_959cea4e.jpg" alt="Bolo artesanal Ana Trufas" className="relative aspect-[.92] w-full rounded-[42%] object-cover p-4 [clip-path:ellipse(45%_49%_at_50%_50%)]" /><div className="absolute bottom-7 left-0 rounded-2xl bg-white px-4 py-3 shadow-xl"><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#aa6b78]">feito hoje</p><p className="mt-1 font-display text-base font-bold text-[#6e203a]">Bolos que abraçam</p></div><div className="absolute right-0 top-10 grid h-20 w-20 rotate-6 place-items-center rounded-full border border-[#f0b7c8] bg-[#fffaf7] text-center shadow-lg"><Star className="mx-auto mb-1 fill-[#d995aa] text-[#d995aa]" size={15} /><span className="text-[10px] font-bold leading-tight text-[#8f294c]">Maceió<br/>AL</span></div></div>
+          </div>
+        </section>
+
+        <section id="cardapio" className="mx-auto max-w-7xl px-5 py-16 lg:px-10 lg:py-24"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="text-xs font-bold uppercase tracking-[.24em] text-[#b14b6c]">para adoçar o seu dia</p><h2 className="mt-3 font-display text-4xl font-bold tracking-[-.03em] text-[#6e203a] sm:text-5xl">Escolha o seu favorito</h2></div><p className="max-w-sm text-sm leading-relaxed text-[#85676b]">Tudo feito sob encomenda, com ingredientes selecionados e aquele toque especial da Ana.</p></div><div className="mt-9 flex gap-2 overflow-x-auto pb-2">{categories.map((category) => <button key={category} onClick={() => setActiveCategory(category)} className={`whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold transition ${activeCategory === category ? "bg-[#8f294c] text-white shadow-lg shadow-[#8f294c]/15" : "border border-[#ebd5d6] bg-white text-[#8a696e] hover:border-[#d998ab] hover:text-[#8f294c]"}`}>{category}</button>)}</div><div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{filteredProducts.map((product, index) => <article key={product.id} className="group overflow-hidden rounded-[26px] border border-[#ecdfe0] bg-white shadow-[0_12px_34px_rgba(110,32,58,.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_44px_rgba(110,32,58,.11)]" style={{ animationDelay: `${index * 50}ms` }}><div className="relative aspect-[1.18] overflow-hidden bg-[#f4e6e4]"><img src={product.image} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />{product.tag && <span className="absolute left-4 top-4 rounded-full bg-[#fffaf7]/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[.16em] text-[#8f294c] backdrop-blur">{product.tag}</span>}</div><div className="p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-display text-xl font-bold text-[#6e203a]">{product.name}</h3><p className="mt-2 text-sm leading-relaxed text-[#8b6f73]">{product.description}</p></div><p className="shrink-0 font-display text-lg font-bold text-[#8f294c]">{money(product.price)}</p></div><button onClick={() => updateCart(product.id, 1)} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-[#e2b4c1] text-sm font-bold text-[#8f294c] transition hover:bg-[#8f294c] hover:text-white active:scale-[.98]"><Plus size={16} /> adicionar à sacola</button></div></article>)}</div></section>
+
+        <section id="historia" className="border-y border-[#ead6d6] bg-[#fff3f0]"><div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 lg:grid-cols-[.8fr_1.2fr] lg:items-center lg:px-10 lg:py-20"><div className="rounded-[28px] bg-[#8f294c] p-8 text-white shadow-[0_20px_50px_rgba(143,41,76,.18)]"><p className="text-xs font-bold uppercase tracking-[.22em] text-[#f8c9d6]">um carinho que começou em casa</p><p className="mt-5 font-serif text-3xl leading-tight">“Cada encomenda leva um pedacinho da nossa história.”</p><div className="mt-8 flex items-center gap-3"><img src="/manus-storage/ana-trufas-logo_f167e9aa.png" className="h-11 w-11 rounded-full border-2 border-white/60" alt="Logo Ana Trufas" /><div><p className="font-bold">Ana Trufas</p><p className="text-xs text-[#f4cbd5]">Maceió · Alagoas</p></div></div></div><div><p className="text-xs font-bold uppercase tracking-[.24em] text-[#b14b6c]">por trás do sabor</p><h2 className="mt-3 font-display text-4xl font-bold tracking-[-.03em] text-[#6e203a]">Celebrar é melhor quando tem afeto.</h2><p className="mt-5 max-w-xl text-base leading-relaxed text-[#806166]">Desde 2014, a Ana Trufas transforma receitas artesanais em momentos memoráveis. A gente cuida de cada detalhe — do primeiro brigadeiro ao kit festa completo — para você só se preocupar em aproveitar.</p><div className="mt-7 grid gap-4 sm:grid-cols-3">{[["12+", "anos de história"], ["100%", "feito artesanalmente"], ["Todos", "os dias com você"]].map(([value, label]) => <div key={label}><p className="font-display text-2xl font-bold text-[#8f294c]">{value}</p><p className="mt-1 text-xs font-semibold uppercase tracking-[.12em] text-[#9a777c]">{label}</p></div>)}</div></div></div></section>
       </main>
+
+      <footer className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-10 text-sm text-[#927277] sm:flex-row sm:items-center sm:justify-between lg:px-10"><div><p className="font-display text-lg font-bold text-[#8f294c]">Ana Trufas</p><p className="mt-1">Doces, bolos e kits festa em Maceió.</p></div><div className="flex items-center gap-5"><a href="https://www.instagram.com/confeitariaanatrufas/" target="_blank" rel="noreferrer" className="font-semibold hover:text-[#8f294c]">Instagram</a><a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="font-semibold hover:text-[#8f294c]">WhatsApp</a></div></footer>
+
+      {cartOpen && <div className="fixed inset-0 z-50"><button aria-label="Fechar sacola" onClick={() => setCartOpen(false)} className="absolute inset-0 bg-[#3a2024]/35 backdrop-blur-sm" /><aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#fffaf7] shadow-2xl"><div className="flex items-center justify-between border-b border-[#ead6d6] px-6 py-5"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#b14b6c]">seu pedido</p><h2 className="mt-1 font-display text-2xl font-bold text-[#6e203a]">Minha sacola <span className="text-base font-normal text-[#9a777c]">({itemCount})</span></h2></div><button onClick={() => setCartOpen(false)} className="grid h-10 w-10 place-items-center rounded-full border border-[#ead6d6] text-[#8f294c] hover:bg-white"><X size={18} /></button></div><div className="flex-1 overflow-y-auto px-6 py-5">{cartItems.length === 0 ? <div className="grid h-full place-items-center text-center"><div><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f7e6e9] text-[#b14b6c]"><ShoppingBag /></div><h3 className="mt-4 font-display text-xl font-bold text-[#6e203a]">Sua sacola está vazia</h3><p className="mt-2 text-sm text-[#927277]">Adicione um docinho para começar.</p><button onClick={() => setCartOpen(false)} className="mt-5 rounded-full bg-[#8f294c] px-5 py-3 text-sm font-bold text-white">Ver cardápio</button></div></div> : <div className="space-y-4">{cartItems.map((item) => <div key={item.id} className="flex gap-3 rounded-2xl border border-[#eadfe0] bg-white p-3"><img src={item.image} alt={item.name} className="h-20 w-20 rounded-xl object-cover" /><div className="min-w-0 flex-1"><p className="font-display text-base font-bold text-[#6e203a]">{item.name}</p><p className="mt-1 text-sm font-bold text-[#8f294c]">{money(item.price)}</p><div className="mt-2 flex items-center gap-2"><button onClick={() => updateCart(item.id, -1)} className="grid h-7 w-7 place-items-center rounded-full bg-[#f7e6e9] text-[#8f294c]"><Minus size={13} /></button><span className="w-5 text-center text-sm font-bold">{item.quantity}</span><button onClick={() => updateCart(item.id, 1)} className="grid h-7 w-7 place-items-center rounded-full bg-[#8f294c] text-white"><Plus size={13} /></button></div></div><p className="font-bold text-[#6e203a]">{money(item.price * item.quantity)}</p></div>)}</div>}
+          {cartItems.length > 0 && <div className="mt-8 border-t border-[#ead6d6] pt-6"><p className="mb-3 text-xs font-bold uppercase tracking-[.16em] text-[#9a777c]">como prefere receber?</p><div className="grid grid-cols-2 gap-2">{([['entrega', 'Entrega'], ['retirada', 'Retirada']] as const).map(([value, label]) => <button key={value} onClick={() => setDelivery(value)} className={`rounded-xl border px-3 py-3 text-sm font-bold ${delivery === value ? "border-[#8f294c] bg-[#f7e6e9] text-[#8f294c]" : "border-[#eadfe0] bg-white text-[#927277]"}`}>{label}</button>)}</div><textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Alguma observação? (opcional)" className="mt-3 min-h-20 w-full resize-none rounded-xl border border-[#eadfe0] bg-white p-3 text-sm outline-none placeholder:text-[#b89b9f] focus:border-[#c77b93]" /></div>}
+        </div>{cartItems.length > 0 && <div className="border-t border-[#ead6d6] bg-white px-6 py-5"><div className="flex items-center justify-between text-sm text-[#927277]"><span>Subtotal</span><strong className="text-lg text-[#6e203a]">{money(subtotal)}</strong></div><p className="mt-2 text-xs text-[#a18488]">A taxa de entrega é confirmada pelo WhatsApp.</p><button onClick={sendOrder} className="mt-4 flex h-13 w-full items-center justify-center gap-2 rounded-full bg-[#25d366] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#25d366]/20 transition hover:-translate-y-0.5"><Check size={17} /> finalizar pelo WhatsApp</button></div>}</aside></div>}
     </div>
   );
 }
